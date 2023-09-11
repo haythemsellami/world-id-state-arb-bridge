@@ -6,7 +6,7 @@ import {IInbox} from "arbitrum-nitro-contracts/bridge/IInbox.sol";
 import {IArbWorldID} from "./interface/IArbWorldID.sol";
 import {IRootHistory} from "world-id-state-bridge/interfaces/IRootHistory.sol";
 import {IWorldIDIdentityManager} from "world-id-state-bridge/interfaces/IWorldIDIdentityManager.sol";
-import {ICrossDomainOwnable3} from "world-id-state-bridge/interfaces/ICrossDomainOwnable3.sol";
+import {ICrossDomainOwnable} from "cross-domain-ownable/interface/ICrossDomainOwnable.sol";
 // contract
 import {Ownable2Step} from "openzeppelin-contracts/access/Ownable2Step.sol";
 
@@ -62,12 +62,25 @@ contract ArbStateBridge is Ownable2Step {
     /// @param rootHistoryExpiry The new root history expiry
     event SetRootHistoryExpiry(uint256 rootHistoryExpiry);
 
+    /// @notice Emitted when the StateBridge gives ownership of the OPWorldID contract
+    /// to the WorldID Identity Manager contract away
+    /// @param previousOwner The previous owner of the OPWorldID contract
+    /// @param newOwner The new owner of the OPWorldID contract
+    /// @param isLocal Whether the ownership transfer is local (Optimism/OP Stack chain EOA/contract)
+    /// or an Ethereum EOA or contract
+    event OwnershipTransferredOp(
+        address indexed previousOwner, address indexed newOwner, bool isLocal
+    );
+
     ///////////////////////////////////////////////////////////////////
     ///                            ERRORS                           ///
     ///////////////////////////////////////////////////////////////////
 
     /// @notice Emitted when an attempt is made to renounce ownership.
     error CannotRenounceOwnership();
+
+    /// @notice Emitted when an attempt is made to set an address to zero
+    error AddressZero();
 
     ///////////////////////////////////////////////////////////////////
     ///                         CONSTRUCTOR                         ///
@@ -135,6 +148,36 @@ contract ArbStateBridge is Ownable2Step {
 
         emit SetRootHistoryExpiry(_rootHistoryExpiry);
     }
+
+    /// @notice Adds functionality to the StateBridge to transfer ownership
+    /// of OpWorldID to another contract on L1 or to a local OP Stack chain EOA
+    /// @param _owner new owner (EOA or contract)
+    /// @param _isLocal true if new owner is on Optimism, false if it is a cross-domain owner
+    /// @custom:revert if _owner is set to the zero address
+    function transferOwnershipArb(address _owner, bool _isLocal) external payable onlyOwner {
+        if (_owner == address(0)) {
+            revert AddressZero();
+        }
+
+        // The `encodeCall` function is strongly typed, so this checks that we are passing the
+        // correct data to the Arb Stack chain bridge.
+        bytes memory message =
+            abi.encodeCall(ICrossDomainOwnable.transferOwnership, (_owner, _isLocal));
+
+        IInbox(inbox).createRetryableTicket{value: msg.value}(
+            arbWorldIDAddress, // destAddr destination L2 contract address
+            0, // l2CallValue call value for retryable L2 message
+            l2MaxSubmissionCost, // maxSubmissionCost Max gas deducted from user's L2 balance to cover base fee
+            msg.sender, // excessFeeRefundAddress maxgas * gasprice - execution cost gets credited here on L2
+            msg.sender, // callValueRefundAddress l2Callvalue gets credited here on L2 if retryable txn times out or gets cancelled
+            RELAY_MESSAGE_L2_GAS_LIMIT, // maxGas Max gas deducted from user's L2 balance to cover L2 execution
+            l2GasPrice, // gasPriceBid price bid for L2 execution
+            message // function call
+        );
+
+        emit OwnershipTransferredOp(owner(), _owner, _isLocal);
+    }
+
 
     /**
      * @notice Returns required amount of ETH to send a message via the Inbox.

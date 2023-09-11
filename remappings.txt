@@ -4,3 +4,4 @@ world-id-state-bridge/=lib/world-id-state-bridge/src/
 arbitrum-nitro-contracts/=lib/nitro-contracts/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 @prb/test/=lib/prb-test/src/
+cross-domain-ownable/=lib/arb-cross-domain-ownable/src/

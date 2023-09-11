@@ -4,8 +4,11 @@ pragma solidity ^0.8.15;
 // interface
 import {IArbWorldID} from "./interface/IArbWorldID.sol";
 // contract
-import {Ownable2Step} from "openzeppelin-contracts/access/Ownable2Step.sol";
+import {ArbSys} from "arbitrum-nitro-contracts/precompiles/ArbSys.sol";
+import {CrossDomainOwnable} from "cross-domain-ownable/CrossDomainOwnable.sol";
 import {WorldIDBridge} from "world-id-state-bridge/abstract/WorldIDBridge.sol";
+// lib
+import {AddressAliasHelper} from "arbitrum-nitro-contracts/libraries/AddressAliasHelper.sol";
 
 /// @title Optimism World ID Bridge
 /// @author Worldcoin
@@ -13,7 +16,9 @@ import {WorldIDBridge} from "world-id-state-bridge/abstract/WorldIDBridge.sol";
 ///         Optimism.
 /// @dev This contract is deployed on Optimism and is called by the L1 Proxy contract for each new
 ///      root insertion.
-contract ArbWorldID is WorldIDBridge, Ownable2Step, IArbWorldID {
+contract ArbWorldID is WorldIDBridge, CrossDomainOwnable, IArbWorldID {
+    address constant arbsys = address(100);
+
     ///////////////////////////////////////////////////////////////////////////////
     ///                                CONSTRUCTION                             ///
     ///////////////////////////////////////////////////////////////////////////////

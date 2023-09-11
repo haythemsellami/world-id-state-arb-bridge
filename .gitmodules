@@ -13,3 +13,6 @@
 [submodule "lib/prb-test"]
 	path = lib/prb-test
 	url = https://github.com/PaulRBerg/prb-test
+[submodule "lib/arb-cross-domain-ownable"]
+	path = lib/arb-cross-domain-ownable
+	url = https://github.com/haythemsellami/arb-cross-domain-ownable

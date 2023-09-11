@@ -22,4 +22,6 @@ interface IArbWorldID {
     /// @custom:reverts CannotOverwriteRoot If the root already exists in the root history.
     /// @custom:reverts string If the caller is not the owner.
     function receiveRoot(uint256 newRoot) external;
+
+    function transferOwnershipCrossChain(address _newOwner, bool _isLocal) external;
 }
