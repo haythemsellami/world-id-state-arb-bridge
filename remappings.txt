@@ -1,0 +1,6 @@
+
+forge-std/=lib/forge-std/src/
+world-id-state-bridge/=lib/world-id-state-bridge/src/
+arbitrum-nitro-contracts/=lib/nitro-contracts/src/
+openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
+@prb/test/=lib/prb-test/src/
